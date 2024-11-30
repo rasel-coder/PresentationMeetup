@@ -1,0 +1,51 @@
+﻿@* @model IEnumerable<PresentationMeetup.Data.Presentation>
+
+<h2>Presentations</h2>
+
+<ul>
+    @foreach (var presentation in Model)
+    {
+        <li>
+            <a class="" data-bs-toggle="modal"
+               data-bs-target="#join-title"
+               data-presentation-id="@presentation.PresentationId"
+               data-presentation-title="@presentation.Title">
+                @presentation.Title
+            </a>
+        </li>
+    }
+</ul>
+
+<a asp-action="Create" class="btn btn-primary">Create New Presentation</a>
+
+<div class="modal fade" id="join-title" tabindex="-1" aria-labelledby="join-titleLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="Details" method="get">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="join-titleLabel">Join Presentation</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="presentationId" id="presentationId" />
+                    <p>Are you your want to join <strong id="presentationTitle"></strong>?</p>
+                    <label id="presentationTitle"></label>
+                    <div class="form-group">
+                        <label for="nickname" class="form-label">Your Name</label>
+                        <input type="text" name="nickname" id="nickname" class="form-control" placeholder="Enter your name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Join</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        
+    </script>
+} *@

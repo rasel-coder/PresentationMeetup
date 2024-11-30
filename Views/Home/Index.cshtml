@@ -1,0 +1,114 @@
+﻿@model PresentationMeetup.ViewModels.PresentationPage
+
+<div class="container mt-3 mb-3">
+	<div class="row">
+		<div class="col-md-4 d-flex align-items-center justify-content-center">
+			<div>
+				<h2>Presentation with happipess for everyony</h2>
+				<p>Connect collaborate and celebrate from anywhere with Presentation Meetup</p>
+				<a asp-action="Create" asp-controller="Presentations" class="btn default-color" data-bs-toggle="modal" data-bs-target="#create-new-presentation">
+					Create New Presentation
+				</a>
+			</div>
+		</div>
+		<div class="col-md-2 d-flex align-items-center justify-content-center">
+			<h4 class="or">or</h4>
+		</div>
+		<div class="col-md-6">
+			<h2 style="font-family: kingslanding; font-size: 70px;">Join on existing presentation</h2>
+			<div class="my-presentation mb-4">
+				<p>My presentations</p>
+				<ol class="custom-counter">
+					@foreach (var presentation in Model.MyPresentations)
+					{
+						<li>
+							<a class="" asp-action="Details" asp-controller="Presentations"
+							   asp-route-PresentationId="@presentation.PresentationId"
+							   asp-route-nickName="@presentation.Creator">
+								@presentation.Title
+							</a>
+						</li>
+					}
+				</ol>
+			</div>
+
+			<div class="other-presentation">
+				<p>Other presentations</p>
+				<ol class="custom-counter">
+					@foreach (var presentation in Model.OtherPresentations)
+					{
+						<li>
+							<a class="" data-bs-toggle="modal"
+							   data-bs-target="#join-title"
+							   data-presentation-id="@presentation.PresentationId"
+							   data-presentation-title="@presentation.Title">
+								@presentation.Title
+							</a>
+						</li>
+					}
+				</ol>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="create-new-presentation" tabindex="-1" aria-labelledby="CreateNewPresentationLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<form asp-action="Create" asp-controller="Presentations" method="post">
+				<div class="modal-header">
+					<h5 class="modal-title" id="CreateNewPresentationLabel">New Presentation</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					@Html.HiddenFor(x => x.Presentation.PresentationId, new { id = "" })
+					<div class="form-group">
+						@Html.LabelFor(x => x.Presentation.Title, new { @class = "form-label", @for = "presentationTitle" })
+						@Html.EditorFor(x => x.Presentation.Title, new { htmlAttributes = new { id = "presentationTitle", @class = "form-control", placeholder = "Enter Presentation Title", required = "required" } })
+						<span asp-validation-for="Presentation.Title" class="text-danger"></span>
+					</div>
+					<div class="form-group">
+						@Html.LabelFor(x => x.Presentation.Creator, new { @class = "form-label", @for = "presentationNickName" })
+						@Html.EditorFor(x => x.Presentation.Creator, new { htmlAttributes = new { id = "presentationNickName", @class = "form-control", placeholder = "Enter your name", required = "required" } })
+						<span asp-validation-for="Presentation.Creator" class="text-danger"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					<button type="submit" class="btn default-color">Create</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="join-title" tabindex="-1" aria-labelledby="join-titleLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<form asp-action="Details" asp-controller="Presentations" method="get">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="join-titleLabel">Join Presentation</h1>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					@Html.HiddenFor(x => x.PresentationId, new { id = "presentationId" })
+					<p>Are you your want to join <strong id="presentationTitle"></strong>?</p>
+					<div class="form-group">
+						@Html.LabelFor(x => x.NickName, new { id = "titleLabel", @class = "form-label", @for = "nickname" })
+						@Html.EditorFor(x => x.NickName, new { htmlAttributes = new { id = "nickname", @class = "form-control", placeholder = "Enter your name", required = "required" } })
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					<button type="submit" class="btn default-color">Join</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+
+	</script>
+}

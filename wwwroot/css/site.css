@@ -1,0 +1,91 @@
+@font-face {
+    font-family: 'kingslanding';
+    src: url('../fonts/kingslanding.otf') format('opentype');
+}
+
+#userList li {
+    list-style: none;
+    padding: 6px 0;
+    border-bottom: 1px solid #00000012;
+}
+
+.default-color {
+    background: rgb(0,200,200);
+    color: #FFF;
+}
+
+.editor-btn {
+    background: #00c8c83d;
+    border: none;
+}
+
+.action-bar {
+    border-radius: 5px;
+    border: 1px solid #0000001a;
+    padding: 10px;
+    background: #FFF;
+}
+
+.or {
+    background: rgb(221 234 234);
+    color: #FFF;
+    padding: 20px 23px;
+    margin: 0;
+    border-radius: 15%;
+    transform: skew(10deg, 10deg);
+}
+
+.custom-counter {
+    margin: 0;
+    list-style-type: none;
+    border-radius: 3px;
+    padding: 20px;
+    background: rgb(240 249 249);
+}
+
+    .custom-counter li {
+        counter-increment: step-counter;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #dbdbdb;
+        padding-bottom: 10px;
+    }
+
+        .custom-counter li::before {
+            content: counter(step-counter);
+            margin-right: 5px;
+            font-size: 80%;
+            background-color: rgb(0,200,200);
+            color: white;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: kingslanding;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .custom-counter li a {
+            color: #000;
+            text-decoration: none;
+        }
+
+.other-presentation,
+.my-presentation {
+    background: rgb(0,200,200);
+    border-radius: 5px;
+    padding: 2px;
+}
+
+.other-presentation p,
+.my-presentation p {
+    padding: 12px 18px;
+    margin: 0;
+    color: #FFF;
+}
+
+#canvas-container,
+.drawing-canvas,
+.canvas-container,
+.upper-canvas {
+    width: 100% !important;
+}
