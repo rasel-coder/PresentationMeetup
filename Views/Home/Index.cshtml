@@ -21,12 +21,8 @@
 				<ol class="custom-counter">
 					@foreach (var presentation in Model.MyPresentations)
 					{
-						<li>
-							<a class="" asp-action="Details" asp-controller="Presentations"
-							   asp-route-PresentationId="@presentation.PresentationId"
-							   asp-route-nickName="@presentation.Creator">
-								@presentation.Title
-							</a>
+						<li onclick="adminJoinPresentation('@presentation.PresentationId', '@presentation.Creator', 'Admin')">
+							@presentation.Title
 						</li>
 					}
 				</ol>
@@ -85,7 +81,7 @@
 <div class="modal fade" id="join-title" tabindex="-1" aria-labelledby="join-titleLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
-			<form asp-action="Details" asp-controller="Presentations" method="get">
+			<form id="viewer-join-presentation">
 				<div class="modal-header">
 					<h1 class="modal-title fs-5" id="join-titleLabel">Join Presentation</h1>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

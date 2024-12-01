@@ -17,6 +17,7 @@
 .editor-btn {
     background: #00c8c83d;
     border: none;
+    margin-top: 5px;
 }
 
 .action-bar {
@@ -64,9 +65,11 @@
             font-weight: bold;
         }
 
-        .custom-counter li a {
+        .custom-counter li button {
             color: #000;
             text-decoration: none;
+            background: none;
+            border: none;
         }
 
 .other-presentation,
@@ -88,4 +91,23 @@
 .canvas-container,
 .upper-canvas {
     width: 100% !important;
+    height: 55vh !important;
 }
+
+.left-slide {
+    border-radius: 50%;
+    padding: 7px 11px;
+}
+
+    .left-slide img {
+        margin-top: -3px;
+        margin-left: -3px;
+    }
+.right-slide {
+    border-radius: 50%;
+    padding: 7px 8px 7px 10px;
+}
+    .right-slide img {
+        margin-top: -3px;
+        margin-left: 0px;
+    }

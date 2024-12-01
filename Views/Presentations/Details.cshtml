@@ -1,4 +1,4 @@
-﻿@model PresentationMeetup.Data.Presentation
+﻿@model PresentationMeetup.ViewModels.PresentationViewModel
 
 @{
 	ViewData["Title"] = "Presentation Editor";
@@ -16,28 +16,35 @@
 			<div class="row m-0">
 				<div class="col-md-8 action-bar">
 					<p class="m-0">Customize</p>
-					@* <button class="btn editor-btn" onclick="loadSlide()" title="Add New Slide"><img src="~/images/add.png" width="20" /></button> *@
-					<button class="btn editor-btn" onclick="addTextBlock()" title="Add Textbox"><img src="~/images/textbox.png" width="20" /></button>
-					<button class="btn editor-btn" onclick="addRectangle()" title="Add Rectangle"><img src="~/images/square.png" width="20" /></button>
-					<button class="btn editor-btn" onclick="addCircle()" title="Add Circle"><img src="~/images/circle.png" width="20" /></button>
-					<button class="btn editor-btn" onclick="addArrow()" title="Add Arrow"><img src="~/images/arrow.png" width="20" /></button>
-					<button class="btn editor-btn" onclick="zoomIn()" title="Zoom In"><img src="~/images/zoomin.png" width="20" /></button>
-					<button class="btn editor-btn" onclick="zoomOut()" title="Zoom Out"><img src="~/images/zoomout.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" id="newSlideBtn" title="Add New Slide"><img src="~/images/add.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="addTextBlock()" title="Add Textbox"><img src="~/images/textbox.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="addRectangle()" title="Add Rectangle"><img src="~/images/square.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="addCircle()" title="Add Circle"><img src="~/images/circle.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="addArrow()" title="Add Arrow"><img src="~/images/arrow.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="zoomIn()" title="Zoom In"><img src="~/images/zoomin.png" width="20" /></button>
+					<button class="btn editor-btn slide-status" onclick="zoomOut()" title="Zoom Out"><img src="~/images/zoomout.png" width="20" /></button>
 
 					<input type="file" id="imageUploader" class="btn editor-btn" />
 				</div>
 
 				<div class="col-md-4 action-bar">
 					<p class="m-0">Actions</p>
-					<button class="btn btn-danger" onclick="clearCanvas()" title="Clear Canvas"><img src="~/images/clearall.png" width="20" /> Clear Canvas</button>
-					<button class="btn btn-danger" onclick="deleteSelectedItem()" title="Delete Selected Item"><img src="~/images/delete.png" width="20" /></button>
-					<button class="btn btn-success" onclick="saveSlide()" title="Save Slide"><img src="~/images/save.png" width="20" /></button>
-					<button class="btn btn-success" onclick="exportToPDF()" title="Export To PDF"><img src="~/images/download.png" width="20" /></button>
+					<button class="btn btn-danger mt-1" onclick="clearCanvas()" title="Clear Canvas"><img src="~/images/clearall.png" width="20" /> Clear Canvas</button>
+					<button class="btn btn-danger mt-1" onclick="deleteSelectedItem()" title="Delete Selected Item"><img src="~/images/delete.png" width="20" /></button>
+					<button class="btn btn-success mt-1" id="saveSlidesBtn" title="Save Slides"><img src="~/images/save.png" width="20" /></button>
+					<button class="btn btn-success mt-1" onclick="exportToPDF()" title="Export To PDF"><img src="~/images/download.png" width="20" /></button>
 				</div>
 			</div>
 
-			<div id="canvas-container" class="my-3" style="background: #FFF;">
-				<canvas id="drawingCanvas" class="drawing-canvas" width="800" height="600" style="border-radius: 5px; border: 1px solid #0000001a; padding: 10px;"></canvas>
+			<div class="mt-2 mb-2 d-flex justify-content-between">
+				<button id="prevSlideBtn" class="btn btn-secondary left-slide" title="Previous Slide"><img src="~/images/prev.png" width="20" /></button>
+				<p class="m-0 d-flex align-items-center" id="slide-page-count">1 of @Model.Slides.Count()</p>
+				<button id="nextSlideBtn" class="btn btn-secondary right-slide" title="Next Slide"><img src="~/images/next.png" width="20" /></button>
+			</div>
+
+			<div id="canvas-container" style="background: #FFF;">
+				<canvas id="drawingCanvas" name="CanvasData" class="drawing-canvas" width="800" height="600"
+						style="border-radius: 5px; border: 1px solid #0000001a; padding: 10px;"></canvas>
 			</div>
 		</div>
 	</div>
@@ -66,16 +73,32 @@
 @section Scripts {
 	<script>
 		$(document).tooltip();
-		connection.start().then(function () {
-			console.log("Connected to SignalR");
-			const nickname = "@ViewBag.Nickname";
-			const presentationId = @Model.PresentationId;
-			connection.invoke("JoinPresentation", presentationId, nickname, "Viewer").catch(function (err) {
-				console.error(err.toString());
-			});
+		$(document).ready(function () {
+			const initialSlides = @Html.Raw(Json.Serialize(Model.Slides))
+			loadSlides(initialSlides);
+		});
+	</script>
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const urlParams = new URLSearchParams(window.location.search);
+			const presentationId = urlParams.get("PresentationId");
+			const nickName = urlParams.get("NickName");
+			const role = urlParams.get("role");
+
+			connection.start()
+				.then(function () {
+					return connection.invoke("JoinPresentation", parseInt(presentationId), nickName, role);
+				})
+				.then(function () {
+					console.log("Successfully joined the presentation.");
+				})
+				.catch(function (err) {
+					console.error("Error during SignalR connection or JoinPresentation invocation:", err.toString());
+				});
 		});
 
-		var canvas = new fabric.Canvas('drawingCanvas');
+
+
 		var zoomFactor = 1;
 
 		// Add Text Block
@@ -84,9 +107,9 @@
 				left: 50,
 				top: 50,
 				width: 200,
-				height: 50,
+				height: 300,
 				fontSize: 20,
-				editable: true
+				editable: false
 			});
 			canvas.add(text);
 		}
@@ -96,9 +119,9 @@
 			var rect = new fabric.Rect({
 				left: 100,
 				top: 100,
-				fill: 'blue',
+				fill: 'gray',
 				width: 150,
-				height: 100
+				height: 150,
 			});
 			canvas.add(rect);
 		}
@@ -109,7 +132,7 @@
 				left: 200,
 				top: 200,
 				radius: 50,
-				fill: 'green'
+				fill: 'yellow'
 			});
 			canvas.add(circle);
 		}
@@ -118,18 +141,19 @@
 		function addArrow() {
 			var line = new fabric.Line([100, 100, 300, 100], {
 				left: 50,
-				top: 50,
+				top: 250,
 				stroke: 'red',
 				strokeWidth: 5,
 				originX: 'center',
 				originY: 'center'
 			});
 			var arrow = new fabric.Triangle({
-				left: 300,
-				top: 100,
+				left: 150,
+				top: 250,
 				width: 20,
 				height: 20,
 				fill: 'red',
+				ScreenOrientation: 90,
 				angle: 0
 			});
 			canvas.add(line);
@@ -146,11 +170,6 @@
 		function zoomOut() {
 			zoomFactor /= 1.1;
 			canvas.setZoom(zoomFactor);
-		}
-
-		// Clear Canvas
-		function clearCanvas() {
-			canvas.clear();
 		}
 
 		// Upload Image

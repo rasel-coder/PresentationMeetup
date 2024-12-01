@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using PresentationMeetup.Data;
 using System;
 using System.Collections.Concurrent;
 using System.Data;
+using static PresentationMeetup.Utility.AppEnum;
 
 namespace PresentationMeetup.Utility;
 
@@ -15,59 +17,118 @@ public class CollaborationHub : Hub
         _context = context;
     }
 
-    public async Task UpdateSlide(int slideId, string content)
+    public async Task<int> UpdateSlide(int slideId, string content)
+    {
+        var slides = await _context.Slides.ToListAsync();
+        int updatedSlideId;
+
+        if (slideId <= 0)
+        {
+            var newSlide = new Slide
+            {
+                PresentationId = slides.FirstOrDefault()?.PresentationId ?? 0,
+                Content = content,
+                SlideNumber = slides.Count + 1,
+                CreatedDate = DateTime.UtcNow,
+                UpdatedDate = DateTime.UtcNow
+            };
+            await _context.AddAsync(newSlide);
+            await _context.SaveChangesAsync();
+
+            updatedSlideId = newSlide.SlideId;
+        }
+        else
+        {
+            var existingSlide = slides.FirstOrDefault(x => x.SlideId == slideId);
+            if (existingSlide != null)
+            {
+                existingSlide.Content = content;
+                existingSlide.UpdatedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                updatedSlideId = existingSlide.SlideId;
+            }
+            else
+            {
+                throw new Exception("Slide not found for update.");
+            }
+        }
+        await Clients.Others.SendAsync("ReceiveSlideUpdate", updatedSlideId, content);
+        return updatedSlideId;
+    }
+
+
+    public async Task DeleteSlide(int slideId)
     {
         var slide = await _context.Slides.FindAsync(slideId);
         if (slide != null)
         {
-            slide.Content = content;
+            _context.Slides.Remove(slide);
             await _context.SaveChangesAsync();
+            await Clients.Others.SendAsync("ReceiveSlideDelete");
         }
-
-        // Broadcast the update to other users
-        await Clients.Others.SendAsync("ReceiveSlideUpdate", slideId, content);
     }
 
-    private static readonly ConcurrentDictionary<string, (string Nickname, string GroupName, string Role)> ConnectedUsers = new();
+    private static readonly ConcurrentDictionary<string, (string Nickname, string PresentationId, string Role)> ConnectedUsers = new();
 
-    public async Task JoinPresentation(int presentationId, string nickname, string role = "Viewer")
+    public async Task JoinPresentation(int PresentationId, string NickName, string role)
     {
-        var groupName = $"presentation-{presentationId}";
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+        var admin = await _context.UserRoles.FirstOrDefaultAsync(x => x.PresentationId == PresentationId);
 
-        // Add user to the connected users list
-        ConnectedUsers[Context.ConnectionId] = (nickname, groupName, role);
+        await Groups.AddToGroupAsync(Context.ConnectionId, PresentationId.ToString());
+        ConnectedUsers[Context.ConnectionId] = (NickName, PresentationId.ToString(), role);
 
-        // Notify the group about the updated user list
-        await NotifyGroupUserListUpdate(groupName);
+        await NotifyGroupUserListUpdate(PresentationId.ToString());
     }
 
     public override async Task OnDisconnectedAsync(Exception exception)
     {
         if (ConnectedUsers.TryRemove(Context.ConnectionId, out var userInfo))
         {
-            var groupName = userInfo.GroupName;
-            var nickname = userInfo.Nickname;
-
-            // Notify the group about the user disconnection
-            await Clients.Group(groupName).SendAsync("UserDisconnected", nickname);
-
-            // Notify the group about the user leaving
-            await NotifyGroupUserListUpdate(userInfo.GroupName);
+            await Clients.Group(userInfo.PresentationId).SendAsync("UserDisconnected", userInfo.Nickname);
+            await NotifyGroupUserListUpdate(userInfo.PresentationId);
         }
-
         await base.OnDisconnectedAsync(exception);
     }
 
-    private async Task NotifyGroupUserListUpdate(string groupName)
+    private async Task NotifyGroupUserListUpdate(string presentationId)
     {
-        // Get all nicknames for the specified group
         var usersInGroup = ConnectedUsers.Values
-        .Where(user => user.GroupName == groupName)
+        .Where(user => user.PresentationId == presentationId)
         .Select(user => new { user.Nickname, user.Role })
         .ToList();
 
-        // Send the updated user list to the group
-        await Clients.Group(groupName).SendAsync("UserListUpdated", usersInGroup);
+        await Clients.Group(presentationId).SendAsync("UserListUpdated", usersInGroup);
     }
+
+
+
+    //public async Task JoinPresentation(int presentationId, string nickname, string role = "Viewer")
+    //{
+    //    await NotifyGroupUserListUpdate(presentationId);
+    //}
+
+    //public override async Task OnDisconnectedAsync(Exception exception)
+    //{
+    //    if (ConnectedUsers.TryRemove(Context.ConnectionId, out var userInfo))
+    //    {
+    //        var groupName = userInfo.GroupName;
+    //        var nickname = userInfo.Nickname;
+
+    //        await Clients.Group(groupName).SendAsync("UserDisconnected", nickname);
+    //        await NotifyGroupUserListUpdate(userInfo.GroupName);
+    //    }
+
+    //    await base.OnDisconnectedAsync(exception);
+    //}
+
+    //private async Task NotifyGroupUserListUpdate(int presentationId)
+    //{
+    //    var usersPresents = _context.UserRoles
+    //    .Where(user => user.PresentationId == presentationId)
+    //    .Select(user => new { user.Nickname, user.Role })
+    //    .ToList();
+
+    //    await Clients.Others.SendAsync("UserListUpdated", usersPresents);
+    //}
 }

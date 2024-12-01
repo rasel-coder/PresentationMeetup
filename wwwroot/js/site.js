@@ -1,19 +1,32 @@
 ﻿
-function updateSlide(slideId, content) {
-    connection.invoke("BroadcastSlideUpdate", slideId, content).catch(err => console.error(err));
-}
+let slides = [];
+let currentSlideIndex = 0;
+let canvas = new fabric.Canvas('drawingCanvas');
 
 // Establish SignalR connection
 const connection = new signalR.HubConnectionBuilder()
     .withUrl("/collaborationHub")
     .build();
 
+function adminJoinPresentation(presentationId, nickName, role) {
+    console.log("Navigating to presentation details page...");
+    window.location.href = `/Presentations/Details?PresentationId=${presentationId}&NickName=${nickName}&role=${role}`;
+}
+
+$("#viewer-join-presentation").on("submit", function (event) {
+    event.preventDefault();
+    var formData = $(this).serialize();
+    formData += "&role=Viewer";
+    console.log(formData);
+    window.location.href = `/Presentations/Details?${formData}`;
+});
+
 // Handle updated user list
-connection.on("UserListUpdated", function (userList) {
+connection.on("UserListUpdated", function (usersInGroup) {
     const $userListElement = $("#userList");
     $userListElement.empty();
 
-    $.each(userList, function (index, user) {
+    $.each(usersInGroup, function (index, user) {
         const $listItem = $(`
         <li class="d-flex justify-content-between">
             ${user.nickname} (${user.role})
@@ -28,24 +41,74 @@ connection.on("UserListUpdated", function (userList) {
             </div>
         </li>
     `);
-
         $userListElement.append($listItem);
     });
-
 });
 
 connection.on("UserDisconnected", function (nickname) {
     console.log(nickname + " has left the presentation.");
 });
 
-// Handle slide content updates
-$(".slide").on("input", function () {
-    const slideId = $(this).attr("id").split("-")[1];
-    const slideContent = $(this).text();
+connection.on("ReceiveSlideUpdate", function (slideId, content) {
+    slides[currentSlideIndex].slideId = slideId;
+    const updatedIndex = slides.findIndex(slide => slide.slideId === slideId);
 
-    connection.invoke("UpdateSlide", slideId, slideContent).catch(function (err) {
-        console.error(err.toString());
-    });
+    if (updatedIndex !== -1) {
+        slides[updatedIndex] = {
+            slideId: slideId,
+            slideData: content,
+        };
+        console.log(`Slide ${updatedIndex + 1} updated:`, slides[updatedIndex]);
+
+        if (currentSlideIndex === updatedIndex) {
+            let index = currentSlideIndex;
+            if (index >= 0 && index < slides.length) {
+                const slide = slides[index];
+                $('#slide-page-count').html(`${index + 1} of ${slides.length}`);
+
+                if (slide && slide.slideData) {
+                    canvas.loadFromJSON(slide.slideData, function () {
+                        canvas.renderAll();
+                        console.log(`Slide ${index + 1} rendered.`);
+                    });
+                } else {
+                    canvas.clear();
+                    console.warn(`Slide ${index + 1} has no data to render.`);
+                }
+            } else {
+                console.error("Invalid slide index:", index);
+            }
+        }
+    } else {
+        console.warn("Slide with the specified ID not found:", slideId);
+    }
+    initializeSlide(currentSlideIndex);
+});
+
+connection.on("ReceiveSlideDelete", function () {
+    slides.splice(currentSlideIndex, 1);
+
+    if (currentSlideIndex >= slides.length) {
+        currentSlideIndex = slides.length - 1;
+    }
+
+    if (slides.length > 0) {
+        console.log(currentSlideIndex);
+        initializeSlide(currentSlideIndex);
+    } else {
+        canvas.clear();
+        alert('No slides left in the presentation.');
+    }
+});
+
+//$('.slide-status').on('click', function () {
+//    initializeSlide(currentSlideIndex);
+//});
+
+
+
+canvas.on("object:modified", function () {
+    updateSlide();
 });
 
 // Optionally handle manual user disconnection
@@ -73,19 +136,16 @@ $('#join-title').on('show.bs.modal', function (event) {
 
 
 
+function updateSlide() {
+    const slideId = slides[currentSlideIndex].slideId;
+    const slideData = JSON.stringify(canvas.toJSON());
 
-//function renderMarkdown(text) {
-//    const html = marked(text);
-//    document.getElementById('markdownPreview').innerHTML = html;
-//}
-
-function updateTextBlockMarkdown() {
-    var activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'textbox') {
-        var markdownText = activeObject.text;
-        //renderMarkdown(markdownText);
-    }
+    connection.invoke("UpdateSlide", slideId, slideData).catch(function (err) {
+        console.error(err.toString());
+    });
 }
+
+
 
 function deleteSelectedItem() {
     var activeObject = canvas.getActiveObject();
@@ -96,51 +156,146 @@ function deleteSelectedItem() {
     }
 }
 
+function loadSlides(initialSlides) {
+    slides = initialSlides.map((slide) => ({
+        slideId: slide.slideId,
+        slideData: slide.slideData ? JSON.parse(slide.slideData) : null,
+    }));
 
-function saveSlide() {
-    var presentationId = $('#presentation-id').val();
-    var slideData = JSON.stringify(canvas.toJSON());
+    if (slides.length > 0) {
+        currentSlideIndex = 0;
+        initializeSlide(currentSlideIndex);
+    }
+    else {
+        slides.push({
+            slideId: slides.length,
+            slideData: {},
+        });
+    }
+}
 
-    console.log(presentationId);
-    console.log(slideData);
+function initializeSlide(index) {
+    const slide = slides[index];
+    $('#slide-page-count').html(`${index + 1} of ${slides.length}`);
+    if (slides[index]) {
+        canvas.loadFromJSON(slide.slideData, canvas.renderAll.bind(canvas));
+    } else {
+        canvas.clear();
+    }
+}
 
-    // Need to send the list of slides or the slide model
+function saveCurrentSlide() {
+    if (currentSlideIndex >= 0 && currentSlideIndex < slides.length) {
+        slides[currentSlideIndex] = {
+            slideId: slides[currentSlideIndex].slideId,
+            slideData: JSON.stringify(canvas.toJSON()),
+        };
+    } else {
+        console.warn("Invalid currentSlideIndex:", currentSlideIndex);
+    }
+}
 
-    $.post('/Presentations/SaveSlide', { presentationId: presentationId, slideData: slideData }, function (response) {
-        if (response.success) {
-            alert("Slide saved successfully!");
-        } else {
-            alert("Error saving the slide.");
+function addNewSlide() {
+    saveCurrentSlide();
+    slides.push({
+        slideId: 0,
+        slideData: {},
+    });
+
+    currentSlideIndex = slides.length - 1;
+    const slideId = 0;
+    const slideData = JSON.stringify({});
+
+    connection.invoke("UpdateSlide", slideId, slideData)
+        .then(function (updatedSlideId) {
+            slides[currentSlideIndex].slideId = updatedSlideId;
+            console.log(`New slide created with ID: ${updatedSlideId}`);
+        })
+        .catch(function (err) {
+            console.error("Error creating/updating slide:", err.toString());
+        });
+    initializeSlide(currentSlideIndex);
+}
+
+function nextSlide() {
+    if (currentSlideIndex < slides.length - 1) {
+        saveCurrentSlide();
+        currentSlideIndex++;
+        initializeSlide(currentSlideIndex);
+    } else {
+        alert('This is the last slide.');
+    }
+}
+
+function prevSlide() {
+    if (currentSlideIndex > 0) {
+        saveCurrentSlide();
+        currentSlideIndex--;
+        initializeSlide(currentSlideIndex);
+    } else {
+        alert('This is the first slide.');
+    }
+}
+
+function saveSlides() {
+    saveCurrentSlide();
+    const presentationId = $('#presentation-id').val();
+
+    const formData = new FormData();
+    formData.append('presentationId', presentationId);
+
+    slides.forEach((slide, index) => {
+        formData.append(`slides[${index}].slideId`, slide.slideId);
+        formData.append(`slides[${index}].slideData`, slide.slideData || '');
+    });
+
+    $.ajax({
+        url: '/Presentations/SaveSlides',
+        type: 'POST',
+        processData: false,
+        contentType: false,
+        data: formData,
+        success: function (response) {
+            alert('All slides saved successfully');
+        },
+        error: function () {
+            alert('Error saving slides');
         }
     });
 }
 
+function clearCanvas() {
+    if (!confirm(`Are you sure you want to delete canvas ${currentSlideIndex + 1}?`)) {
+        return;
+    }
 
-//function loadSlide(slideId) {
-//    $.get(`/Presentations/GetSlide?id=${slideId}`, function (response) {
-//        if (response.success) {
-//            canvas.loadFromJSON(response.slideData, canvas.renderAll.bind(canvas));
-//        } else {
-//            alert("Error loading the slide.");
-//        }
-//    });
-//}
+    var slideId = slides[currentSlideIndex].slideId;
+    console.log(slideId);
+    connection.invoke("DeleteSlide", slideId).catch(function (err) {
+        console.error(err.toString());
+    });
+
+    slides.splice(currentSlideIndex, 1);
+
+    if (currentSlideIndex >= slides.length) {
+        currentSlideIndex = slides.length - 1;
+    }
+
+    if (slides.length > 0) {
+        initializeSlide(currentSlideIndex);
+    } else {
+        canvas.clear();
+        alert('No slides left in the presentation.');
+    }
+}
 
 
-//function animateObject() {
-//    var activeObject = canvas.getActiveObject();
-//    if (activeObject) {
-//        activeObject.animate('left', '+=50', {
-//            onChange: canvas.renderAll.bind(canvas),
-//            duration: 1000
-//        });
-//    }
-//}
+$('#newSlideBtn').on('click', addNewSlide);
+$('#nextSlideBtn').on('click', nextSlide);
+$('#prevSlideBtn').on('click', prevSlide);
+$('#saveSlidesBtn').on('click', saveSlides);
 
-
-
-
-
+initializeSlide(currentSlideIndex);
 
 function exportToPDF() {
     const { jsPDF } = window.jspdf;
