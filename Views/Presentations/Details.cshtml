@@ -8,12 +8,13 @@
 	<div class="col-md-10 p-4 pe-2" style="background: #00c8c80a; border-radius: 5px;">
 		<div class="container">
 			<input asp-for="PresentationId" type="hidden" id="presentation-id" />
-				<h4 style="font-family: kingslanding; font-size: 30px; font-weight: bold;">
-					@Model.Title?.ToUpper()
-					<span class="" style="color: gray; font-size: 20px;">--by @Model.Creator</span>
-				</h4>
+			<h4 style="font-family: kingslanding; font-size: 30px; font-weight: bold;">
+				@Model.Title?.ToUpper()
+				<span class="" style="color: gray; font-size: 20px;">--by @Model.Creator</span>
+			</h4>
 
-			@if (@ViewBag.UserRole == "Admin") {
+			@if (@ViewBag.UserRole == "Admin")
+			{
 				<div class="row m-0">
 					<div class="col-md-8 action-bar">
 						<p class="m-0">Customize</p>
@@ -25,7 +26,7 @@
 						<button class="btn editor-btn slide-status" onclick="zoomIn()" title="Zoom In"><img src="~/images/zoomin.png" width="20" /></button>
 						<button class="btn editor-btn slide-status" onclick="zoomOut()" title="Zoom Out"><img src="~/images/zoomout.png" width="20" /></button>
 
-						<input type="file" id="imageUploader" class="btn editor-btn" />
+						<input type="file" id="imageUploader" class="btn editor-btn" accept="image/png" /> <span class="text-danger">PNG only *</span>
 					</div>
 
 					<div class="col-md-4 action-bar">
@@ -82,6 +83,10 @@
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function () {
+			 connection = new signalR.HubConnectionBuilder()
+		.withUrl("/collaborationHub")
+		.build();
+
 			const presentationId = '@Model.PresentationId';
 			const nickName = '@ViewBag.Nickname';
 			const role = '@ViewBag.UserRole';
@@ -96,6 +101,10 @@
 				.catch(function (err) {
 					console.error("Error during SignalR connection or JoinPresentation invocation:", err.toString());
 				});
+
+			// connection.invoke("JoinPresentation", parseInt(presentationId), nickName, role).catch(function (err) {
+			// 	console.error(err.toString());
+			// });
 		});
 
 

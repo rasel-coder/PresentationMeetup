@@ -4,9 +4,23 @@ let currentSlideIndex = 0;
 let canvas = new fabric.Canvas('drawingCanvas');
 
 // Establish SignalR connection
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/collaborationHub")
+    connection = new signalR.HubConnectionBuilder()
+        .withUrl("/collaborationHub")
     .build();
+
+connection.stop().then(() => {
+
+    connection.start()
+        .then(function () {
+            console.log("SignalR connection established.");
+        })
+        .catch(function (err) {
+            console.error("SignalR connection failed:", err.toString());
+            setTimeout(startConnection, 5000);
+        });
+});
+
+
 
 function adminJoinPresentation(presentationId, nickName, role) {
     console.log("Navigating to presentation details page...");
@@ -232,32 +246,32 @@ function prevSlide() {
     }
 }
 
-function saveSlides() {
-    saveCurrentSlide();
-    const presentationId = $('#presentation-id').val();
+//function saveSlides() {
+//    saveCurrentSlide();
+//    const presentationId = $('#presentation-id').val();
 
-    const formData = new FormData();
-    formData.append('presentationId', presentationId);
+//    const formData = new FormData();
+//    formData.append('presentationId', presentationId);
 
-    slides.forEach((slide, index) => {
-        formData.append(`slides[${index}].slideId`, slide.slideId);
-        formData.append(`slides[${index}].slideData`, slide.slideData || '');
-    });
+//    slides.forEach((slide, index) => {
+//        formData.append(`slides[${index}].slideId`, slide.slideId);
+//        formData.append(`slides[${index}].slideData`, slide.slideData || '');
+//    });
 
-    $.ajax({
-        url: '/Presentations/SaveSlides',
-        type: 'POST',
-        processData: false,
-        contentType: false,
-        data: formData,
-        success: function (response) {
-            alert('All slides saved successfully');
-        },
-        error: function () {
-            alert('Error saving slides');
-        }
-    });
-}
+//    $.ajax({
+//        url: '/Presentations/SaveSlides',
+//        type: 'POST',
+//        processData: false,
+//        contentType: false,
+//        data: formData,
+//        success: function (response) {
+//            alert('All slides saved successfully');
+//        },
+//        error: function () {
+//            alert('Error saving slides');
+//        }
+//    });
+//}
 
 function clearCanvas() {
     if (!confirm(`Are you sure you want to delete canvas ${currentSlideIndex + 1}?`)) {
@@ -289,7 +303,7 @@ function clearCanvas() {
 $('#newSlideBtn').on('click', addNewSlide);
 $('#nextSlideBtn').on('click', nextSlide);
 $('#prevSlideBtn').on('click', prevSlide);
-$('#saveSlidesBtn').on('click', saveSlides);
+/*$('#saveSlidesBtn').on('click', saveSlides);*/
 
 initializeSlide(currentSlideIndex);
 
