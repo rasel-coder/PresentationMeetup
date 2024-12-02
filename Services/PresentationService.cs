@@ -35,6 +35,13 @@ public class PresentationService
         return model.UserRoleId;
     }
 
+    public async Task<int> CreateSlide(Slide model)
+    {
+        _context.Slides.Add(model);
+        await _context.SaveChangesAsync();
+        return model.SlideId;
+    }
+
     // Add an editor by NickName to the presentation
     public async Task<bool> AddEditor(int presentationId, string editorNickName)
     {

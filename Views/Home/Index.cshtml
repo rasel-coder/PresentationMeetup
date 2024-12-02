@@ -6,7 +6,7 @@
 			<div>
 				<h2>Presentation with happipess for everyony</h2>
 				<p>Connect collaborate and celebrate from anywhere with Presentation Meetup</p>
-				<a asp-action="Create" asp-controller="Presentations" class="btn default-color" data-bs-toggle="modal" data-bs-target="#create-new-presentation">
+				<a asp-action="Create" asp-controller="Presentations" class="btn default-color" data-bs-toggle="modal" data-bs-target="#new-presentation">
 					Create New Presentation
 				</a>
 			</div>
@@ -34,7 +34,7 @@
 					@foreach (var presentation in Model.OtherPresentations)
 					{
 						<li>
-							<a class="" data-bs-toggle="modal"
+							<a class="text-decoration-none text-black" data-bs-toggle="modal"
 							   data-bs-target="#join-title"
 							   data-presentation-id="@presentation.PresentationId"
 							   data-presentation-title="@presentation.Title">
@@ -48,7 +48,7 @@
 	</div>
 </div>
 
-<div class="modal fade" id="create-new-presentation" tabindex="-1" aria-labelledby="CreateNewPresentationLabel" aria-hidden="true">
+<div class="modal fade" id="new-presentation" tabindex="-1" aria-labelledby="CreateNewPresentationLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<form asp-action="Create" asp-controller="Presentations" method="post">
@@ -81,7 +81,7 @@
 <div class="modal fade" id="join-title" tabindex="-1" aria-labelledby="join-titleLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
-			<form id="viewer-join-presentation">
+			<form asp-action="Details" asp-controller="Presentations" method="get">
 				<div class="modal-header">
 					<h1 class="modal-title fs-5" id="join-titleLabel">Join Presentation</h1>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

@@ -49,6 +49,15 @@ public class PresentationsController : Controller
             };
             await _presentationService.CreateUserRole(userRole);
 
+            Slide newSlide = new Slide
+            {
+                PresentationId = id,
+                SlideNumber = 1,
+                CreatedDate = DateTime.UtcNow,
+                UpdatedDate = DateTime.UtcNow
+            };
+            await _presentationService.CreateSlide(newSlide);
+
             return RedirectToAction(nameof(Details), new { presentationId = id, nickName = presentation.Creator });
         }
         return View(presentation);
@@ -78,14 +87,11 @@ public class PresentationsController : Controller
 
         if (!string.IsNullOrEmpty(nickName) && !presentation.Users.Any(u => u.Nickname == nickName))
         {
-            presentation.Users.Add(new UserRole
-            {
-                Nickname = nickName,
-                Role = AppEnum.Role.Viewer.ToString(),
-                UserId = userId,
-                PresentationId = presentationId
-            });
-            await _context.SaveChangesAsync();
+            ViewBag.UserRole = "Viewer";
+        }
+        else
+        {
+            ViewBag.UserRole = "Admin";
         }
 
         var viewModel = new PresentationViewModel
@@ -100,61 +106,9 @@ public class PresentationsController : Controller
             }).ToList()
         };
 
-        //viewModel.Users = presentation.Users;
         ViewBag.Nickname = nickName;
         return View(viewModel);
     }
-
-    //[HttpPost]
-    //public async Task<IActionResult> SaveSlides(int presentationId, List<SlideViewModel> slides)
-    //{
-    //    var slideList = await _context.Slides.Where(x => x.PresentationId == presentationId).ToListAsync();
-    //    _context.Slides.RemoveRange(slideList);
-
-    //    int slideNumber = 1;
-    //    if (slides != null && slides.Any())
-    //    {
-    //        foreach (var item in slides)
-    //        {
-    //            var slide = new Slide
-    //            {
-    //                PresentationId = presentationId,
-    //                Content = item.SlideData,
-    //                SlideNumber = slideNumber,
-    //                CreatedDate = DateTime.UtcNow,
-    //                UpdatedDate = DateTime.UtcNow
-    //            };
-    //            _context.Slides.Add(slide);
-    //            slideNumber++;
-    //        }
-    //    }
-    //    await _context.SaveChangesAsync();
-    //    return Json(new { success = true, presentationId = presentationId });
-    //}
-
-    //[HttpGet]
-    //public async Task<IActionResult> GetSlide(int id)
-    //{
-    //    var presentation = await _context.Presentations.FindAsync(id);
-    //    if (presentation != null)
-    //    {
-    //        return Json(new { success = true, slideData = presentation.CanvasData });
-    //    }
-    //    return Json(new { success = false, message = "Presentation not found" });
-    //}
-
-    //[HttpDelete]
-    //public async Task<IActionResult> DeleteSlide(int id)
-    //{
-    //    var presentation = await _context.Presentations.FindAsync(id);
-    //    if (presentation != null)
-    //    {
-    //        _context.Presentations.Remove(presentation);
-    //        await _context.SaveChangesAsync();
-    //        return Json(new { success = true });
-    //    }
-    //    return Json(new { success = false, message = "Presentation not found" });
-    //}
 
     [HttpPost("add-editor")]
     public async Task<IActionResult> AddEditor([FromBody] AddEditor model)

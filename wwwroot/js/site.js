@@ -13,14 +13,6 @@ function adminJoinPresentation(presentationId, nickName, role) {
     window.location.href = `/Presentations/Details?PresentationId=${presentationId}&NickName=${nickName}&role=${role}`;
 }
 
-$("#viewer-join-presentation").on("submit", function (event) {
-    event.preventDefault();
-    var formData = $(this).serialize();
-    formData += "&role=Viewer";
-    console.log(formData);
-    window.location.href = `/Presentations/Details?${formData}`;
-});
-
 // Handle updated user list
 connection.on("UserListUpdated", function (usersInGroup) {
     const $userListElement = $("#userList");
@@ -154,6 +146,7 @@ function deleteSelectedItem() {
     } else {
         alert("Please select an item to delete.");
     }
+    updateSlide();
 }
 
 function loadSlides(initialSlides) {
@@ -222,6 +215,7 @@ function nextSlide() {
         saveCurrentSlide();
         currentSlideIndex++;
         initializeSlide(currentSlideIndex);
+        updateSlide();
     } else {
         alert('This is the last slide.');
     }
@@ -232,6 +226,7 @@ function prevSlide() {
         saveCurrentSlide();
         currentSlideIndex--;
         initializeSlide(currentSlideIndex);
+        updateSlide();
     } else {
         alert('This is the first slide.');
     }
@@ -283,6 +278,7 @@ function clearCanvas() {
 
     if (slides.length > 0) {
         initializeSlide(currentSlideIndex);
+        updateSlide();
     } else {
         canvas.clear();
         alert('No slides left in the presentation.');

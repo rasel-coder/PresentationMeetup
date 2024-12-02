@@ -8,39 +8,41 @@
 	<div class="col-md-10 p-4 pe-2" style="background: #00c8c80a; border-radius: 5px;">
 		<div class="container">
 			<input asp-for="PresentationId" type="hidden" id="presentation-id" />
-			<h4 style="font-family: kingslanding; font-size: 30px; font-weight: bold;">
-				@Model.Title?.ToUpper()
-				<span class="" style="color: gray; font-size: 20px;">--by @Model.Creator</span>
-			</h4>
+			@if (@ViewBag.UserRole == "Admin") {
+				<h4 style="font-family: kingslanding; font-size: 30px; font-weight: bold;">
+					@Model.Title?.ToUpper()
+					<span class="" style="color: gray; font-size: 20px;">--by @Model.Creator</span>
+				</h4>
 
-			<div class="row m-0">
-				<div class="col-md-8 action-bar">
-					<p class="m-0">Customize</p>
-					<button class="btn editor-btn slide-status" id="newSlideBtn" title="Add New Slide"><img src="~/images/add.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="addTextBlock()" title="Add Textbox"><img src="~/images/textbox.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="addRectangle()" title="Add Rectangle"><img src="~/images/square.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="addCircle()" title="Add Circle"><img src="~/images/circle.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="addArrow()" title="Add Arrow"><img src="~/images/arrow.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="zoomIn()" title="Zoom In"><img src="~/images/zoomin.png" width="20" /></button>
-					<button class="btn editor-btn slide-status" onclick="zoomOut()" title="Zoom Out"><img src="~/images/zoomout.png" width="20" /></button>
+				<div class="row m-0">
+					<div class="col-md-8 action-bar">
+						<p class="m-0">Customize</p>
+						<button class="btn editor-btn slide-status" id="newSlideBtn" title="Add New Slide"><img src="~/images/add.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="addTextBlock()" title="Add Textbox"><img src="~/images/textbox.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="addRectangle()" title="Add Rectangle"><img src="~/images/square.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="addCircle()" title="Add Circle"><img src="~/images/circle.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="addArrow()" title="Add Arrow"><img src="~/images/arrow.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="zoomIn()" title="Zoom In"><img src="~/images/zoomin.png" width="20" /></button>
+						<button class="btn editor-btn slide-status" onclick="zoomOut()" title="Zoom Out"><img src="~/images/zoomout.png" width="20" /></button>
 
-					<input type="file" id="imageUploader" class="btn editor-btn" />
+						<input type="file" id="imageUploader" class="btn editor-btn" />
+					</div>
+
+					<div class="col-md-4 action-bar">
+						<p class="m-0">Actions</p>
+						<button class="btn btn-danger mt-1" onclick="clearCanvas()" title="Clear Canvas"><img src="~/images/clearall.png" width="20" /> Clear Canvas</button>
+						<button class="btn btn-danger mt-1" onclick="deleteSelectedItem()" title="Delete Selected Item"><img src="~/images/delete.png" width="20" /></button>
+						<button class="btn btn-success mt-1" id="saveSlidesBtn" title="Save Slides"><img src="~/images/save.png" width="20" /></button>
+						<button class="btn btn-success mt-1" onclick="exportToPDF()" title="Export To PDF"><img src="~/images/download.png" width="20" /></button>
+					</div>
 				</div>
 
-				<div class="col-md-4 action-bar">
-					<p class="m-0">Actions</p>
-					<button class="btn btn-danger mt-1" onclick="clearCanvas()" title="Clear Canvas"><img src="~/images/clearall.png" width="20" /> Clear Canvas</button>
-					<button class="btn btn-danger mt-1" onclick="deleteSelectedItem()" title="Delete Selected Item"><img src="~/images/delete.png" width="20" /></button>
-					<button class="btn btn-success mt-1" id="saveSlidesBtn" title="Save Slides"><img src="~/images/save.png" width="20" /></button>
-					<button class="btn btn-success mt-1" onclick="exportToPDF()" title="Export To PDF"><img src="~/images/download.png" width="20" /></button>
+				<div class="mt-2 mb-2 d-flex justify-content-between">
+					<button id="prevSlideBtn" class="btn btn-secondary left-slide" title="Previous Slide"><img src="~/images/prev.png" width="20" /></button>
+					<p class="m-0 d-flex align-items-center" id="slide-page-count">1 of @Model.Slides.Count()</p>
+					<button id="nextSlideBtn" class="btn btn-secondary right-slide" title="Next Slide"><img src="~/images/next.png" width="20" /></button>
 				</div>
-			</div>
-
-			<div class="mt-2 mb-2 d-flex justify-content-between">
-				<button id="prevSlideBtn" class="btn btn-secondary left-slide" title="Previous Slide"><img src="~/images/prev.png" width="20" /></button>
-				<p class="m-0 d-flex align-items-center" id="slide-page-count">1 of @Model.Slides.Count()</p>
-				<button id="nextSlideBtn" class="btn btn-secondary right-slide" title="Next Slide"><img src="~/images/next.png" width="20" /></button>
-			</div>
+			}
 
 			<div id="canvas-container" style="background: #FFF;">
 				<canvas id="drawingCanvas" name="CanvasData" class="drawing-canvas" width="800" height="600"
@@ -80,10 +82,9 @@
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function () {
-			const urlParams = new URLSearchParams(window.location.search);
-			const presentationId = urlParams.get("PresentationId");
-			const nickName = urlParams.get("NickName");
-			const role = urlParams.get("role");
+			const presentationId = '@Model.PresentationId';
+			const nickName = '@ViewBag.Nickname';
+			const role = '@ViewBag.UserRole';
 
 			connection.start()
 				.then(function () {
@@ -109,7 +110,7 @@
 				width: 200,
 				height: 300,
 				fontSize: 20,
-				editable: false
+				editable: true
 			});
 			canvas.add(text);
 		}
