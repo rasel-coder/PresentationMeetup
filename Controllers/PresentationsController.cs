@@ -30,10 +30,10 @@ public class PresentationsController : Controller
                 userId = Guid.NewGuid().ToString();
                 Response.Cookies.Append("userId", userId, new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddDays(30),
+                    Expires = DateTimeOffset.Now.AddDays(30),
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax
                 });
             }
 
@@ -65,19 +65,6 @@ public class PresentationsController : Controller
 
     public async Task<IActionResult> Details(int presentationId, string? nickName)
     {
-        var userId = Request.Cookies["userId"];
-        if (string.IsNullOrEmpty(userId))
-        {
-            userId = Guid.NewGuid().ToString();
-            Response.Cookies.Append("userId", userId, new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddDays(30),
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
-        }
-
         var presentation = await _context.Presentations
             .Include(p => p.Slides)
             .Include(p => p.Users)
@@ -110,21 +97,15 @@ public class PresentationsController : Controller
         return View(viewModel);
     }
 
-    [HttpPost("add-editor")]
-    public async Task<IActionResult> AddEditor([FromBody] AddEditor model)
+    public async Task<IActionResult> DeletePresentation(int presentationId)
     {
-        var result = await _presentationService.AddEditor(model.PresentationId, model.EditorNickName);
-        if (result)
+        var presentation = await _context.Presentations.FindAsync(presentationId);
+        if (presentation != null)
         {
-            return Ok();
+            _context.Presentations.Remove(presentation);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Home");
         }
-        return NotFound("Presentation not found or user cannot be added as editor.");
-    }
-
-    [HttpGet("can-edit/{presentationId}/{userNickName}")]
-    public async Task<IActionResult> CanEdit(int presentationId, string userNickName)
-    {
-        var canEdit = await _presentationService.CanEdit(presentationId, userNickName);
-        return Ok(new { canEdit });
+        return Json(new { success = false, message = "Presentation not found" });
     }
 }

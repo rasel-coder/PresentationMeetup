@@ -8,12 +8,12 @@
 	<div class="col-md-10 p-4 pe-2" style="background: #00c8c80a; border-radius: 5px;">
 		<div class="container">
 			<input asp-for="PresentationId" type="hidden" id="presentation-id" />
-			@if (@ViewBag.UserRole == "Admin") {
 				<h4 style="font-family: kingslanding; font-size: 30px; font-weight: bold;">
 					@Model.Title?.ToUpper()
 					<span class="" style="color: gray; font-size: 20px;">--by @Model.Creator</span>
 				</h4>
 
+			@if (@ViewBag.UserRole == "Admin") {
 				<div class="row m-0">
 					<div class="col-md-8 action-bar">
 						<p class="m-0">Customize</p>
@@ -32,7 +32,7 @@
 						<p class="m-0">Actions</p>
 						<button class="btn btn-danger mt-1" onclick="clearCanvas()" title="Clear Canvas"><img src="~/images/clearall.png" width="20" /> Clear Canvas</button>
 						<button class="btn btn-danger mt-1" onclick="deleteSelectedItem()" title="Delete Selected Item"><img src="~/images/delete.png" width="20" /></button>
-						<button class="btn btn-success mt-1" id="saveSlidesBtn" title="Save Slides"><img src="~/images/save.png" width="20" /></button>
+						@* <button class="btn btn-success mt-1" id="saveSlidesBtn" title="Save Slides"><img src="~/images/save.png" width="20" /></button> *@
 						<button class="btn btn-success mt-1" onclick="exportToPDF()" title="Export To PDF"><img src="~/images/download.png" width="20" /></button>
 					</div>
 				</div>

@@ -21,9 +21,14 @@
 				<ol class="custom-counter">
 					@foreach (var presentation in Model.MyPresentations)
 					{
-						<li onclick="adminJoinPresentation('@presentation.PresentationId', '@presentation.Creator', 'Admin')">
-							@presentation.Title
-						</li>
+							<li>
+								<a class="pres-content" asp-action="Details" asp-controller="Presentations"
+								   asp-route-presentationId="@presentation.PresentationId" asp-route-nickName="@presentation.Creator">@presentation.Title</a>
+								<a class="btn btn-sm btn-danger float-end"
+								   asp-action="DeletePresentation" asp-controller="Presentations" asp-route-presentationId="@presentation.PresentationId">
+								<img src="~/images/delete.png" width="16" />
+							</a>
+							</li>
 					}
 				</ol>
 			</div>
@@ -33,14 +38,14 @@
 				<ol class="custom-counter">
 					@foreach (var presentation in Model.OtherPresentations)
 					{
-						<li>
-							<a class="text-decoration-none text-black" data-bs-toggle="modal"
-							   data-bs-target="#join-title"
-							   data-presentation-id="@presentation.PresentationId"
-							   data-presentation-title="@presentation.Title">
+							<li>
+								<a class="text-decoration-none text-black pres-content" data-bs-toggle="modal"
+										data-bs-target="#join-title"
+										data-presentation-id="@presentation.PresentationId"
+										data-presentation-title="@presentation.Title">
 								@presentation.Title
-							</a>
-						</li>
+								</a>
+							</li>
 					}
 				</ol>
 			</div>
@@ -104,7 +109,7 @@
 </div>
 
 @section Scripts {
-	<script>
+						<script>
 
-	</script>
+						</script>
 }

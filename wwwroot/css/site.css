@@ -65,7 +65,7 @@
             font-weight: bold;
         }
 
-        .custom-counter li button {
+        .custom-counter li .pres-content {
             color: #000;
             text-decoration: none;
             background: none;

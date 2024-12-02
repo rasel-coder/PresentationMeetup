@@ -14,17 +14,8 @@ public class PresentationService
 
     public async Task<int> CreatePresentation(Presentation model)
     {
-        //var presentation = new Presentation
-        //{
-        //    Title = model.Title,
-        //    CreatedDate = DateTime.UtcNow,
-        //    UpdatedDate = DateTime.UtcNow,
-        //    Creator = model.Creator,
-        //};
-
         _context.Presentations.Add(model);
         await _context.SaveChangesAsync();
-
         return model.PresentationId;
     }
 
@@ -40,38 +31,6 @@ public class PresentationService
         _context.Slides.Add(model);
         await _context.SaveChangesAsync();
         return model.SlideId;
-    }
-
-    // Add an editor by NickName to the presentation
-    public async Task<bool> AddEditor(int presentationId, string editorNickName)
-    {
-        var presentation = await _context.Presentations.FindAsync(presentationId);
-        if (presentation == null)
-        {
-            return false;
-        }
-
-        if (presentation.Creator != editorNickName && !presentation.Editors.Contains(editorNickName))
-        {
-            presentation.Editors.Add(editorNickName);
-            await _context.SaveChangesAsync();
-        }
-
-        return true;
-    }
-
-    // Check if a user with NickName can edit a presentation
-    public async Task<bool> CanEdit(int presentationId, string userNickName)
-    {
-        var presentation = await _context.Presentations
-            .FirstOrDefaultAsync(p => p.PresentationId == presentationId);
-
-        if (presentation == null)
-        {
-            return false;
-        }
-
-        return presentation.Creator == userNickName || presentation.Editors.Contains(userNickName);
     }
 
     public async Task<List<Presentation>> GetMyPresentationsAsync(string userId)
@@ -109,5 +68,12 @@ public class PresentationService
         await _context.SaveChangesAsync();
 
         return newSlide.SlideId;
+    }
+
+    public async Task DeleteAllPresentationAsync()
+    {
+        var presentations = await _context.Presentations.ToListAsync();
+        _context.RemoveRange(presentations);
+        await _context.SaveChangesAsync();
     }
 }

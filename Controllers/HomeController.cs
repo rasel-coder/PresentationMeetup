@@ -20,9 +20,26 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         var userId = Request.Cookies["userId"];
+        if (string.IsNullOrEmpty(userId))
+        {
+            userId = Guid.NewGuid().ToString();
+            Response.Cookies.Append("userId", userId, new CookieOptions
+            {
+                Expires = DateTimeOffset.Now.AddDays(30),
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Lax
+            });
+        }
         PresentationPage presentationPage = new PresentationPage();
         presentationPage.MyPresentations = await _presentationService.GetMyPresentationsAsync(userId);
         presentationPage.OtherPresentations = await _presentationService.GetOtherPresentationsAsync(userId);
         return View(presentationPage);
+    }
+
+    public async Task<IActionResult> DeleteAllPresentation()
+    {
+        await _presentationService.DeleteAllPresentationAsync();
+        return RedirectToAction("Index");
     }
 }
